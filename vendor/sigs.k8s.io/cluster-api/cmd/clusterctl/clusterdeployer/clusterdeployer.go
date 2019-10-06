@@ -90,6 +90,7 @@ func (d *ClusterDeployer) Create(cluster *clusterv1.Cluster, machines []*cluster
 	}
 
 	klog.Infof("Creating control plane machine in namespace %q", cluster.Namespace)
+	klog.Infof("1111111111      apply Master %q", cluster.Namespace)
 	if err := phases.ApplyMachines(bootstrapClient, cluster.Namespace, []*clusterv1.Machine{controlPlaneMachines[0]}); err != nil {
 		return errors.Wrap(err, "unable to create control plane machine")
 	}
@@ -140,6 +141,7 @@ func (d *ClusterDeployer) Create(cluster *clusterv1.Cluster, machines []*cluster
 		// supported versions of k8s we are deploying (using kubeadm) have the fix.
 		klog.Info("Creating additional control plane machines in target cluster.")
 		for _, controlPlaneMachine := range controlPlaneMachines[1:] {
+	        klog.Infof("1111111111      apply other masters %q", cluster.Namespace)
 			if err := phases.ApplyMachines(targetClient, cluster.Namespace, []*clusterv1.Machine{controlPlaneMachine}); err != nil {
 				return errors.Wrap(err, "unable to create additional control plane machines")
 			}
@@ -147,6 +149,7 @@ func (d *ClusterDeployer) Create(cluster *clusterv1.Cluster, machines []*cluster
 	}
 
 	klog.Info("Creating node machines in target cluster.")
+	klog.Infof("1111111111      apply node %q", cluster.Namespace)
 	if err := phases.ApplyMachines(targetClient, cluster.Namespace, nodes); err != nil {
 		return errors.Wrap(err, "unable to create node machines")
 	}

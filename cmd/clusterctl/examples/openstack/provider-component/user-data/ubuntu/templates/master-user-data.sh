@@ -13,6 +13,9 @@ swapoff -a
 echo "127.0.0.1 $(hostname)"  >> /etc/hosts
 # disable swap in fstab
 sed -i.bak -r 's/(.+ swap .+)/#\1/' /etc/fstab
+rm -rf /var/lib/apt/lists/*
+apt-get clean
+sed -i 's/nova.clouds.archive.ubuntu.com/ftp.daum.net/g' /etc/apt/sources.list
 curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
 touch /etc/apt/sources.list.d/kubernetes.list
 sh -c 'echo "deb http://apt.kubernetes.io/ kubernetes-xenial main" > /etc/apt/sources.list.d/kubernetes.list'
@@ -47,7 +50,11 @@ EnvironmentFile=/etc/default/docker
 ExecStart=
 ExecStart=/usr/bin/dockerd -H fd:// \$DOCKER_OPTS
 EOF
-
+   cat > /etc/docker/daemon.json <<EOF
+{
+  "insecure-registries" : ["192.168.219.202:5000"]
+}
+EOF
     systemctl daemon-reload
     systemctl enable docker
     systemctl start docker

@@ -64,16 +64,20 @@ type ServerNetwork struct {
 
 // InstanceCreate creates a compute instance
 func (is *Service) InstanceCreate(clusterName string, name string, clusterSpec *openstackconfigv1.OpenstackClusterProviderSpec, config *openstackconfigv1.OpenstackProviderSpec, userdata string, keyName string) (instance *Instance, err error) {
+    klog.Infof("1111111111")
 	var createOpts servers.CreateOptsBuilder
 	if config == nil {
+        klog.Infof("1111111111      return")
 		return nil, fmt.Errorf("create Options need be specified to create instace")
 	}
 	if config.Trunk == true {
 		trunkSupport, err := getTrunkSupport(is)
 		if err != nil {
+            klog.Infof("1111111111      return")
 			return nil, fmt.Errorf("there was an issue verifying whether trunk support is available, please disable it: %v", err)
 		}
 		if trunkSupport == false {
+            klog.Infof("1111111111      return")
 			return nil, fmt.Errorf("there is no trunk support. Please disable it")
 		}
 	}
@@ -93,6 +97,7 @@ func (is *Service) InstanceCreate(clusterName string, name string, clusterSpec *
 	// Get security groups
 	securityGroups, err := getSecurityGroups(is, config.SecurityGroups)
 	if err != nil {
+        klog.Infof("1111111111      return")
 		return nil, err
 	}
 	// Get all network UUIDs
@@ -102,6 +107,7 @@ func (is *Service) InstanceCreate(clusterName string, name string, clusterSpec *
 		opts.ID = net.UUID
 		ids, err := getNetworkIDsByFilter(is.networkClient, &opts)
 		if err != nil {
+            klog.Infof("1111111111      return")
 			return nil, err
 		}
 		for _, netID := range ids {
@@ -117,6 +123,7 @@ func (is *Service) InstanceCreate(clusterName string, name string, clusterSpec *
 				subnetOpts.NetworkID = netID
 				subnetsByFilter, err := networking.GetSubnetsByFilter(is.networkClient, &subnetOpts)
 				if err != nil {
+                    klog.Infof("1111111111      return")
 					return nil, err
 				}
 				for _, subnetByFilter := range subnetsByFilter {
@@ -132,6 +139,7 @@ func (is *Service) InstanceCreate(clusterName string, name string, clusterSpec *
 	var portsList []servers.Network
 	for _, net := range nets {
 		if net.networkID == "" {
+            klog.Infof("1111111111      return")
 			return nil, fmt.Errorf("no network was found or provided. Please check your machine configuration and try again")
 		}
 		allPages, err := ports.List(is.networkClient, ports.ListOpts{
@@ -139,10 +147,12 @@ func (is *Service) InstanceCreate(clusterName string, name string, clusterSpec *
 			NetworkID: net.networkID,
 		}).AllPages()
 		if err != nil {
+            klog.Infof("1111111111      return")
 			return nil, fmt.Errorf("searching for existing port for server: %v", err)
 		}
 		portList, err := ports.ExtractPorts(allPages)
 		if err != nil {
+            klog.Infof("1111111111      return")
 			return nil, fmt.Errorf("searching for existing port for server err: %v", err)
 		}
 		var port ports.Port
@@ -150,6 +160,7 @@ func (is *Service) InstanceCreate(clusterName string, name string, clusterSpec *
 			// create server port
 			port, err = createPort(is, name, net, &securityGroups)
 			if err != nil {
+                klog.Infof("1111111111      return")
 				return nil, fmt.Errorf("failed to create port err: %v", err)
 			}
 		} else {
@@ -159,6 +170,7 @@ func (is *Service) InstanceCreate(clusterName string, name string, clusterSpec *
 		_, err = attributestags.ReplaceAll(is.networkClient, "ports", port.ID, attributestags.ReplaceAllOpts{
 			Tags: machineTags}).Extract()
 		if err != nil {
+            klog.Infof("1111111111      return")
 			return nil, fmt.Errorf("tagging port for server err: %v", err)
 		}
 		portsList = append(portsList, servers.Network{
@@ -171,10 +183,12 @@ func (is *Service) InstanceCreate(clusterName string, name string, clusterSpec *
 				PortID: port.ID,
 			}).AllPages()
 			if err != nil {
+                klog.Infof("1111111111      return")
 				return nil, fmt.Errorf("searching for existing trunk for server err: %v", err)
 			}
 			trunkList, err := trunks.ExtractTrunks(allPages)
 			if err != nil {
+                klog.Infof("1111111111      return")
 				return nil, fmt.Errorf("searching for existing trunk for server err: %v", err)
 			}
 			var trunk trunks.Trunk
@@ -186,6 +200,7 @@ func (is *Service) InstanceCreate(clusterName string, name string, clusterSpec *
 				}
 				newTrunk, err := trunks.Create(is.networkClient, trunkCreateOpts).Extract()
 				if err != nil {
+                    klog.Infof("1111111111      return")
 					return nil, fmt.Errorf("create trunk for server err: %v", err)
 				}
 				trunk = *newTrunk
@@ -196,6 +211,7 @@ func (is *Service) InstanceCreate(clusterName string, name string, clusterSpec *
 			_, err = attributestags.ReplaceAll(is.networkClient, "trunks", trunk.ID, attributestags.ReplaceAllOpts{
 				Tags: machineTags}).Extract()
 			if err != nil {
+                klog.Infof("1111111111      return")
 				return nil, fmt.Errorf("tagging trunk for server err: %v", err)
 			}
 		}
@@ -212,6 +228,7 @@ func (is *Service) InstanceCreate(clusterName string, name string, clusterSpec *
 	// Get image ID
 	imageID, err := getImageID(is, config.Image)
 	if err != nil {
+        klog.Infof("1111111111      return")
 		return nil, fmt.Errorf("create new server err: %v", err)
 	}
 
@@ -255,9 +272,11 @@ func (is *Service) InstanceCreate(clusterName string, name string, clusterSpec *
 		KeyName:           keyName,
 	}).Extract()
 	if err != nil {
+        klog.Infof("1111111111      return")
 		return nil, fmt.Errorf("create new server err: %v", err)
 	}
 	is.computeClient.Microversion = ""
+    klog.Infof("1111111111      return")
 	return &Instance{*server}, nil
 }
 

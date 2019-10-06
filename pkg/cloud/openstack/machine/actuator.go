@@ -78,6 +78,7 @@ func NewActuator(params ActuatorParams) *Actuator {
 }
 
 func (a *Actuator) Create(ctx context.Context, cluster *clusterv1.Cluster, machine *clusterv1.Machine) error {
+    klog.Infof("1111111111      return")
 
 	if cluster == nil {
 		return fmt.Errorf("the cluster is nil, check your cluster configuration")
@@ -88,31 +89,37 @@ func (a *Actuator) Create(ctx context.Context, cluster *clusterv1.Cluster, machi
 
 	osProviderClient, clientOpts, err := provider.NewClientFromMachine(a.params.KubeClient, machine)
 	if err != nil {
+        klog.Infof("1111111111      return")
 		return err
 	}
 
 	computeService, err := compute.NewService(osProviderClient, clientOpts)
 	if err != nil {
+        klog.Infof("1111111111      return")
 		return err
 	}
 
 	clusterProviderSpec, clusterProviderStatus, err := providerv1.ClusterSpecAndStatusFromProviderSpec(cluster)
 	if err != nil {
+        klog.Infof("1111111111      return")
 		return a.handleMachineError(machine, apierrors.CreateMachine(
 			"error creating Openstack instance: %v", err))
 	}
 	machineProviderSpec, err := providerv1.MachineSpecFromProviderSpec(machine.Spec.ProviderSpec)
 	if err != nil {
+        klog.Infof("1111111111      return")
 		return a.handleMachineError(machine, apierrors.InvalidMachineConfiguration(
 			"Cannot unmarshal machineProviderSpec field: %v", err))
 	}
 
 	if vErr := a.validateMachine(machine, machineProviderSpec); vErr != nil {
+        klog.Infof("1111111111      return")
 		return a.handleMachineError(machine, vErr)
 	}
 
 	instance, err := a.instanceExists(machine)
 	if err != nil {
+        klog.Infof("1111111111      return")
 		return err
 	}
 	// We're skipping server creation if it already exists. FloatingIP and LoadBalancer member should be reconciled anyway.
@@ -122,14 +129,18 @@ func (a *Actuator) Create(ctx context.Context, cluster *clusterv1.Cluster, machi
 		userData, err := userdata.GetUserData(a.params.Client, a.params.KubeClient, machineProviderSpec, cluster, machine)
 		if err != nil {
 			if machineError, ok := err.(*apierrors.MachineError); ok {
+                klog.Infof("1111111111      return")
 				return a.handleMachineError(machine, machineError)
 			}
+            klog.Infof("1111111111      return")
 			return err
 		}
 
+        klog.Infof("1111111111      call InstanceCreate, clusterName:%s, machie.name:%s, userdata:%s, keyName:%s",clusterName, machine.Name, userData, machineProviderSpec.KeyName)
 		instance, err = computeService.InstanceCreate(clusterName, machine.Name, clusterProviderSpec, machineProviderSpec, userData, machineProviderSpec.KeyName)
 
 		if err != nil {
+            klog.Infof("1111111111      return")
 			return a.handleMachineError(machine, apierrors.CreateMachine(
 				"error creating Openstack instance: %v", err))
 		}
@@ -138,11 +149,14 @@ func (a *Actuator) Create(ctx context.Context, cluster *clusterv1.Cluster, machi
 		err = util.PollImmediate(RetryIntervalInstanceStatus, instanceCreateTimeout, func() (bool, error) {
 			instance, err := computeService.GetInstance(instance.ID)
 			if err != nil {
+                klog.Infof("1111111111      return")
 				return false, nil
 			}
+            klog.Infof("1111111111      return")
 			return instance.Status == "ACTIVE", nil
 		})
 		if err != nil {
+            klog.Infof("1111111111      return")
 			return a.handleMachineError(machine, apierrors.CreateMachine(
 				"error creating Openstack instance: %v", err))
 		}
@@ -151,6 +165,7 @@ func (a *Actuator) Create(ctx context.Context, cluster *clusterv1.Cluster, machi
 	if machineProviderSpec.FloatingIP != "" {
 		err := computeService.AssociateFloatingIP(instance.ID, machineProviderSpec.FloatingIP)
 		if err != nil {
+            klog.Infof("1111111111      return")
 			return a.handleMachineError(machine, apierrors.CreateMachine(
 				"Associate floatingIP err: %v", err))
 		}
@@ -158,11 +173,13 @@ func (a *Actuator) Create(ctx context.Context, cluster *clusterv1.Cluster, machi
 
 	loadbalancerService, err := loadbalancer.NewService(osProviderClient, clientOpts, clusterProviderSpec.UseOctavia)
 	if err != nil {
+        klog.Infof("1111111111      return")
 		return err
 	}
 	if clusterProviderSpec.ManagedAPIServerLoadBalancer {
 		err := loadbalancerService.ReconcileLoadBalancerMember(clusterName, machine, clusterProviderSpec, clusterProviderStatus)
 		if err != nil {
+            klog.Infof("1111111111      return")
 			return a.handleMachineError(machine, apierrors.CreateMachine(
 				"Reconcile LoadBalancer Member err: %v", err))
 		}
@@ -183,10 +200,12 @@ func (a *Actuator) Create(ctx context.Context, cluster *clusterv1.Cluster, machi
 	record.Eventf(machine, "CreatedInstance", "Created new instance with id: %s", instance.ID)
 	err = a.updateAnnotation(machine, instance.ID)
 	if err != nil {
+        klog.Infof("1111111111      return")
 		return err
 	}
 
 	klog.Infof("Created Machine %s/%s: %s successfully", cluster.Namespace, cluster.Name, machine.Name)
+    klog.Infof("1111111111      return")
 	return nil
 }
 

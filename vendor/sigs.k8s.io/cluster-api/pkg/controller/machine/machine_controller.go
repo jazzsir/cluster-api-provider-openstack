@@ -97,16 +97,19 @@ func (r *ReconcileMachine) Reconcile(request reconcile.Request) (reconcile.Resul
 	// TODO(mvladev): Can context be passed from Kubebuilder?
 	ctx := context.TODO()
 
+    klog.Infof("1111111111")
 	// Fetch the Machine instance
 	m := &clusterv1.Machine{}
 	if err := r.Client.Get(ctx, request.NamespacedName, m); err != nil {
 		if apierrors.IsNotFound(err) {
 			// Object not found, return.  Created objects are automatically garbage collected.
 			// For additional cleanup logic use finalizers.
+            klog.Infof("1111111111      return")
 			return reconcile.Result{}, nil
 		}
 
 		// Error reading the object - requeue the request.
+        klog.Infof("1111111111      return")
 		return reconcile.Result{}, err
 	}
 
@@ -118,6 +121,7 @@ func (r *ReconcileMachine) Reconcile(request reconcile.Request) (reconcile.Resul
 	// for machine management.
 	cluster, err := r.getCluster(ctx, m)
 	if err != nil {
+        klog.Infof("1111111111      return")
 		return reconcile.Result{}, err
 	}
 
@@ -149,10 +153,12 @@ func (r *ReconcileMachine) Reconcile(request reconcile.Request) (reconcile.Resul
 		if len(m.Finalizers) > finalizerCount {
 			if err := r.Client.Update(ctx, m); err != nil {
 				klog.Infof("Failed to add finalizers to machine %q: %v", name, err)
+                klog.Infof("1111111111      return")
 				return reconcile.Result{}, err
 			}
 
 			// Since adding the finalizer updates the object return to avoid later update issues
+            klog.Infof("1111111111      return")
 			return reconcile.Result{Requeue: true}, nil
 		}
 	}
@@ -161,11 +167,13 @@ func (r *ReconcileMachine) Reconcile(request reconcile.Request) (reconcile.Resul
 		// no-op if finalizer has been removed.
 		if !util.Contains(m.ObjectMeta.Finalizers, clusterv1.MachineFinalizer) {
 			klog.Infof("Reconciling machine %q causes a no-op as there is no finalizer", name)
+            klog.Infof("1111111111      return")
 			return reconcile.Result{}, nil
 		}
 
 		if !r.isDeleteAllowed(m) {
 			klog.Infof("Deleting machine hosting this controller is not allowed. Skipping reconciliation of machine %q", name)
+            klog.Infof("1111111111      return")
 			return reconcile.Result{}, nil
 		}
 
@@ -173,10 +181,12 @@ func (r *ReconcileMachine) Reconcile(request reconcile.Request) (reconcile.Resul
 		if err := r.actuator.Delete(ctx, cluster, m); err != nil {
 			if requeueErr, ok := errors.Cause(err).(controllerError.HasRequeueAfterError); ok {
 				klog.Infof("Actuator returned requeue-after error: %v", requeueErr)
+                klog.Infof("1111111111      return")
 				return reconcile.Result{Requeue: true, RequeueAfter: requeueErr.GetRequeueAfter()}, nil
 			}
 
 			klog.Errorf("Failed to delete machine %q: %v", name, err)
+            klog.Infof("1111111111      return")
 			return reconcile.Result{}, err
 		}
 
@@ -184,6 +194,7 @@ func (r *ReconcileMachine) Reconcile(request reconcile.Request) (reconcile.Resul
 			klog.Infof("Deleting node %q for machine %q", m.Status.NodeRef.Name, m.Name)
 			if err := r.deleteNode(ctx, cluster, m.Status.NodeRef.Name); err != nil && !apierrors.IsNotFound(err) {
 				klog.Errorf("Error deleting node %q for machine %q: %v", m.Status.NodeRef.Name, name, err)
+                klog.Infof("1111111111      return")
 				return reconcile.Result{}, err
 			}
 		}
@@ -192,16 +203,19 @@ func (r *ReconcileMachine) Reconcile(request reconcile.Request) (reconcile.Resul
 		m.ObjectMeta.Finalizers = util.Filter(m.ObjectMeta.Finalizers, clusterv1.MachineFinalizer)
 		if err := r.Client.Update(context.Background(), m); err != nil {
 			klog.Errorf("Failed to remove finalizer from machine %q: %v", name, err)
+            klog.Infof("1111111111      return")
 			return reconcile.Result{}, err
 		}
 
 		klog.Infof("Machine %q deletion successful", name)
+        klog.Infof("1111111111      return")
 		return reconcile.Result{}, nil
 	}
 
 	exist, err := r.actuator.Exists(ctx, cluster, m)
 	if err != nil {
 		klog.Errorf("Failed to check if machine %q exists: %v", name, err)
+        klog.Infof("1111111111      return")
 		return reconcile.Result{}, err
 	}
 
@@ -210,13 +224,16 @@ func (r *ReconcileMachine) Reconcile(request reconcile.Request) (reconcile.Resul
 		if err := r.actuator.Update(ctx, cluster, m); err != nil {
 			if requeueErr, ok := errors.Cause(err).(controllerError.HasRequeueAfterError); ok {
 				klog.Infof("Actuator returned requeue-after error: %v", requeueErr)
+                klog.Infof("1111111111      return")
 				return reconcile.Result{Requeue: true, RequeueAfter: requeueErr.GetRequeueAfter()}, nil
 			}
 
 			klog.Errorf(`Error updating machine "%s/%s": %v`, m.Namespace, name, err)
+            klog.Infof("1111111111      return")
 			return reconcile.Result{}, err
 		}
 
+        klog.Infof("1111111111      return")
 		return reconcile.Result{}, nil
 	}
 
@@ -225,13 +242,16 @@ func (r *ReconcileMachine) Reconcile(request reconcile.Request) (reconcile.Resul
 	if err := r.actuator.Create(ctx, cluster, m); err != nil {
 		if requeueErr, ok := errors.Cause(err).(controllerError.HasRequeueAfterError); ok {
 			klog.Infof("Actuator returned requeue-after error: %v", requeueErr)
+            klog.Infof("1111111111      return")
 			return reconcile.Result{Requeue: true, RequeueAfter: requeueErr.GetRequeueAfter()}, nil
 		}
 
 		klog.Warningf("Failed to create machine %q: %v", name, err)
+        klog.Infof("1111111111      return")
 		return reconcile.Result{}, err
 	}
 
+    klog.Infof("1111111111      return")
 	return reconcile.Result{}, nil
 }
 

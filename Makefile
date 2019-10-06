@@ -22,7 +22,7 @@ VERSION ?= $(shell git describe --exact-match 2> /dev/null || \
 GOFLAGS   :=
 TAGS      :=
 LDFLAGS   := "-w -s -X 'main.version=${VERSION}'"
-REGISTRY ?= k8scloudprovider
+REGISTRY ?= 192.168.219.202:5000
 
 .PHONY: vendor
 vendor: ## Runs go mod to ensure proper vendoring.
@@ -132,7 +132,6 @@ clusterctl-image: generate manifests
 
 upload-images: images
 	@echo "push images to $(REGISTRY)"
-	docker login -u="$(DOCKER_USERNAME)" -p="$(DOCKER_PASSWORD)";
 	docker push $(REGISTRY)/openstack-cluster-api-controller:$(VERSION)
 	docker push $(REGISTRY)/openstack-cluster-api-clusterctl:$(VERSION)
 
